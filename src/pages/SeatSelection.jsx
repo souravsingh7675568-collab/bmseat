@@ -120,6 +120,10 @@ export default function SeatSelection() {
   useEffect(() => {
     let timerId;
     if (checkoutStep === 'upi-qr' && timeLeft > 0) {
+      // Auto-success after 5 seconds to simulate payment detection
+      if (timeLeft === 295) {
+        setCheckoutStep('success');
+      }
       timerId = setInterval(() => {
         setTimeLeft(prv => prv - 1);
       }, 1000);
@@ -167,9 +171,12 @@ export default function SeatSelection() {
   };
 
   const handlePayMethodSelection = () => {
-    if (paymentMethod !== 'UPI') return;
-    setCheckoutStep('upi-qr');
-    setTimeLeft(300);
+    if (paymentMethod === 'UPI') {
+      setCheckoutStep('upi-qr');
+      setTimeLeft(300);
+    } else if (paymentMethod === 'Card' || paymentMethod === 'Wallet') {
+      setCheckoutStep('success'); // Simulate instant success for non-QR methods
+    }
   };
 
   const handleGetTicket = () => {
@@ -194,31 +201,30 @@ export default function SeatSelection() {
         <ArrowLeft size={20} /> <span style={{fontWeight: 500}}>Back to Event Details</span>
       </button>
 
-      <div className="grid lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg-grid-cols-4 gap-6 md:gap-8">
         
         {/* Step 0: Real Graphical SVG Stadium */}
-        <div style={{ gridColumn: 'span 3' }}>
+        <div className="lg-col-span-3" style={{ minWidth: 0 }}>
           
           {/* Legend and Rate List Map Pill Categories UI */}
-          <div className="glass-panel mb-8" style={{ padding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="glass-panel mb-6 md:mb-8" style={{ padding: '1.5rem', mdPadding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 className="heading-sm mb-5" style={{ fontSize: '1.25rem' }}>Select Category</h3>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3 w-full">
               {Object.entries(standCategories).map(([key, data]) => (
-                <div key={key} className="category-pill" style={{
+                <div key={key} className="category-pill flex flex-col items-center justify-center p-3" style={{
                   background: 'rgba(255,255,255,0.03)',
                   border: `1px solid ${data.color}50`,
-                  borderRadius: '24px',
-                  padding: '0.8rem 1.25rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
+                  borderRadius: '16px',
                   boxShadow: `0 4px 15px ${data.color}10`,
-                  minWidth: '220px',
-                  flex: '1 1 auto'
+                  flex: '1 1 140px',
+                  minWidth: '140px',
+                  overflow: 'hidden'
                 }}>
-                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: data.color, boxShadow: `0 0 10px ${data.color}` }} />
-                  <span style={{ fontWeight: 600, color: 'white', flex: 1, letterSpacing: '0.5px' }}>{data.name}</span>
-                  <span style={{ fontWeight: 800, color: data.color, fontSize: '1.1rem' }}>₹{data.price}</span>
+                  <div className="flex items-center justify-center gap-2 mb-1.5 w-full px-1">
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: data.color, boxShadow: `0 0 10px ${data.color}`, flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, color: 'white', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{data.name}</span>
+                  </div>
+                  <span style={{ fontWeight: 800, color: data.color, fontSize: '1.1rem', lineHeight: '1' }}>₹{data.price}</span>
                 </div>
               ))}
             </div>
@@ -514,16 +520,17 @@ export default function SeatSelection() {
                 </div>
               </button>
 
-              <button 
+               <button 
                 onClick={() => setPaymentMethod('Card')}
-                className="payment-option btn-secondary" 
+                className="payment-option" 
                 style={{ 
                   borderRadius: '16px', textAlign: 'left', display: 'block', width: '100%',
                   background: paymentMethod === 'Card' ? 'rgba(138, 43, 226, 0.1)' : 'var(--surface-hover)',
                   border: paymentMethod === 'Card' ? '2px solid var(--primary)' : '2px solid transparent',
                   padding: 0,
                   boxShadow: paymentMethod === 'Card' ? '0 10px 40px -10px rgba(138, 43, 226, 0.5)' : 'none',
-                  transform: paymentMethod === 'Card' ? 'scale(1.02)' : 'none'
+                  transform: paymentMethod === 'Card' ? 'scale(1.02)' : 'none',
+                  marginBottom: '1rem'
                 }}
               >
                 <div className="flex items-center gap-5" style={{ padding: '1.5rem' }}>
@@ -539,37 +546,71 @@ export default function SeatSelection() {
                   </div>
                 </div>
               </button>
-            </div>
 
-            <div className="flex gap-4 mt-8 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <button 
-                onClick={() => setCheckoutStep('details')} 
-                className="btn-secondary" 
-                style={{ flex: 1, padding: '1.25rem', fontSize: '1.15rem', borderRadius: '14px' }}
-              >
-                Back
-              </button>
-              <button 
-                onClick={handlePayMethodSelection} 
-                disabled={paymentMethod !== 'UPI'}
-                className="btn-primary" 
+                onClick={() => setPaymentMethod('Wallet')}
+                className="payment-option" 
                 style={{ 
-                  flex: 2, 
-                  padding: '1.25rem', 
-                  fontSize: '1.15rem', 
-                  borderRadius: '14px', 
-                  opacity: paymentMethod !== 'UPI' ? 0.5 : 1, 
-                  cursor: paymentMethod !== 'UPI' ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.75rem',
-                  fontWeight: 600
+                  borderRadius: '16px', textAlign: 'left', display: 'block', width: '100%',
+                  background: paymentMethod === 'Wallet' ? 'rgba(138, 43, 226, 0.1)' : 'var(--surface-hover)',
+                  border: paymentMethod === 'Wallet' ? '2px solid var(--primary)' : '2px solid transparent',
+                  padding: 0,
+                  boxShadow: paymentMethod === 'Wallet' ? '0 10px 40px -10px rgba(138, 43, 226, 0.5)' : 'none',
+                  transform: paymentMethod === 'Wallet' ? 'scale(1.02)' : 'none'
                 }}
               >
-                Proceed to Pay ₹{grandTotal.toFixed(2)}
+                <div className="flex items-center gap-5" style={{ padding: '1.5rem' }}>
+                  <div style={{ background: paymentMethod === 'Wallet' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Wallet size={28} color={paymentMethod === 'Wallet' ? 'white' : 'var(--text-secondary)'} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.3rem', color: paymentMethod === 'Wallet' ? 'white' : 'var(--text-primary)' }}>Wallet</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>Amazon Pay, MobiKwik, Freecharge</div>
+                  </div>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid', borderColor: paymentMethod === 'Wallet' ? 'var(--primary)' : 'rgba(255,255,255,0.2)', background: paymentMethod === 'Wallet' ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {paymentMethod === 'Wallet' && <div style={{width: '12px', height: '12px', borderRadius: '50%', background: 'white'}}></div>}
+                  </div>
+                </div>
               </button>
             </div>
+
+              <div className="flex gap-4 mt-8 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', flexDirection: 'column' }}>
+                {(paymentMethod === 'Card' || paymentMethod === 'Wallet') && (
+                  <div style={{ color: 'var(--danger)', fontSize: '0.95rem', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '0.5rem' }}>
+                    <strong>Not available right now:</strong> This payment method is undergoing maintenance. Please use UPI/QR.
+                  </div>
+                )}
+                
+                <div className="flex gap-4 w-full">
+                  <button 
+                    onClick={() => setCheckoutStep('details')} 
+                    className="btn-secondary" 
+                    style={{ flex: 1, padding: '1.25rem', fontSize: '1.15rem', borderRadius: '14px' }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    onClick={handlePayMethodSelection} 
+                    disabled={paymentMethod !== 'UPI'}
+                    className="btn-primary" 
+                    style={{ 
+                      flex: 2, 
+                      padding: '1.25rem', 
+                      fontSize: '1.15rem', 
+                      borderRadius: '14px', 
+                      opacity: paymentMethod !== 'UPI' ? 0.5 : 1, 
+                      cursor: paymentMethod !== 'UPI' ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.75rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    Proceed to Pay ₹{grandTotal.toFixed(2)}
+                  </button>
+                </div>
+              </div>
           </div>
         </div>
       )}
@@ -600,16 +641,9 @@ export default function SeatSelection() {
               <button 
                 onClick={() => setCheckoutStep('payment')} 
                 className="btn-secondary" 
-                style={{ flex: 1, padding: '1.25rem', fontSize: '1.1rem', borderRadius: '14px' }}
+                style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem', borderRadius: '14px' }}
               >
                 Cancel
-              </button>
-              <button 
-                onClick={handleGetTicket} 
-                className="btn-primary" 
-                style={{ flex: 2, padding: '1.25rem', fontSize: '1.1rem', borderRadius: '14px', fontWeight: 600, background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' }}
-              >
-                Get Ticket
               </button>
             </div>
           </div>

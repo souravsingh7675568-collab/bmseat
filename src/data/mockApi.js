@@ -22,7 +22,7 @@ const getFallbackMatches = async () => {
       date: "2026-04-10T19:30:00Z",
       venue: "M. A. Chidambaram Stadium, Chennai",
       description: "The classic rivalry! Witness MS Dhoni's CSK take on Rohit Sharma's MI.",
-      image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800"
     },
     {
       id: "ipl-102",
@@ -33,7 +33,7 @@ const getFallbackMatches = async () => {
       date: "2026-04-12T19:30:00Z",
       venue: "M. Chinnaswamy Stadium, Bangalore",
       description: "Virat Kohli back at Chinnaswamy against the fiery KKR lineup.",
-      image: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=800"
     },
     {
       id: "ipl-103",
@@ -44,7 +44,7 @@ const getFallbackMatches = async () => {
       date: "2026-04-15T15:30:00Z",
       venue: "Narendra Modi Stadium, Ahmedabad",
       description: "A repeat of the epic final! GT takes on RR at the largest cricket stadium in the world.",
-      image: "https://images.unsplash.com/photo-1595015024765-a8f895ce492b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1533443042926-a3f2313dd37a?auto=format&fit=crop&q=80&w=800"
     },
     {
       id: "ipl-104",
@@ -54,8 +54,52 @@ const getFallbackMatches = async () => {
       team2Short: "DC",
       date: "2026-04-18T19:30:00Z",
       venue: "Rajiv Gandhi International Stadium, Hyderabad",
-      description: "Orange Army ready to rumble against the Capitals. Get your tickets now before they sell out.",
-      image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+      description: "Orange Army ready to rumble against the Capitals.",
+      image: "https://images.unsplash.com/photo-1593344484962-796055d4a3a4?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: "ipl-105",
+      team1: "Lucknow Super Giants",
+      team2: "Punjab Kings",
+      team1Short: "LSG",
+      team2Short: "PBKS",
+      date: "2026-04-20T19:30:00Z",
+      venue: "Ekana Cricket Stadium, Lucknow",
+      description: "KL Rahul leads his giants against the aggressive Punjab lineup.",
+      image: "https://images.unsplash.com/photo-1512715502754-8ca930467222?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: "ipl-106",
+      team1: "Chennai Super Kings",
+      team2: "Royal Challengers Bangalore",
+      team1Short: "CSK",
+      team2Short: "RCB",
+      date: "2026-04-22T19:30:00Z",
+      venue: "M. A. Chidambaram Stadium, Chennai",
+      description: "The Southern Derby! Dhoni vs Kohli in the heart of Chennai.",
+      image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: "ipl-107",
+      team1: "Mumbai Indians",
+      team2: "Gujarat Titans",
+      team1Short: "MI",
+      team2Short: "GT",
+      date: "2026-04-25T19:30:00Z",
+      venue: "Wankhede Stadium, Mumbai",
+      description: "Home advantage for MI at the iconic Wankhede against the Titans.",
+      image: "https://images.unsplash.com/photo-1595015024765-a8f895ce492b?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: "ipl-108",
+      team1: "Rajasthan Royals",
+      team2: "Kolkata Knight Riders",
+      team1Short: "RR",
+      team2Short: "KKR",
+      date: "2026-04-28T19:30:00Z",
+      venue: "Sawai Mansingh Stadium, Jaipur",
+      description: "Pink City ready for a high-voltage clash under the stars.",
+      image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=800"
     }
   ];
 };
