@@ -3,6 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchMatchDetails } from '../data/mockApi';
 import { ArrowLeft, Monitor, CreditCard, Wallet, Smartphone, User, Mail, Phone, CheckCircle2, Ticket } from 'lucide-react';
 
+const standCategories = {
+  general: { name: 'General Stand', price: 599, color: '#ec4899' },
+  premium: { name: 'Premium Stand', price: 999, color: '#0ea5e9' },
+  pavilion: { name: 'Pavilion Stand', price: 1499, color: '#22c55e' },
+  vip: { name: 'VIP Stand', price: 1999, color: '#8b5cf6' },
+  corporate: { name: 'Corporate Box', price: 2199, color: '#eab308' },
+  hospitality: { name: 'Hospitality Box', price: 2599, color: '#f97316' },
+};
+
 // Math Helpers for SVG Arc Generation
 function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
   const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
@@ -28,31 +37,22 @@ function describeStand(x, y, innerRadius, outerRadius, startAngle, endAngle) {
   ].join(" ");
 }
 
-function describeArcText(x, y, radius, startAngle, endAngle) {
-    const start = polarToCartesian(x, y, radius, startAngle);
-    const end = polarToCartesian(x, y, radius, endAngle);
-    return [
-      "M", start.x, start.y, 
-      "A", radius, radius, 0, 0, 1, end.x, end.y
-    ].join(" ");
-}
-
-const generateSeatsForStand = (prefix, cx, cy, innerR, outerR, startAng, endAng, rows, seatsPerRow, isVip) => {
+const generateSeatsForStand = (standObj, cx, cy) => {
   const seats = [];
-  const radiusStep = (outerR - innerR) / rows;
-  const angleStep = (endAng - startAng) / seatsPerRow;
+  const radiusStep = (standObj.outerR - standObj.innerR) / standObj.rows;
+  const angleStep = (standObj.endAng - standObj.startAng) / standObj.seatsPerRow;
 
-  for (let r = 0; r < rows; r++) {
-    const currentRadius = innerR + (r + 0.5) * radiusStep;
-    for (let s = 0; s < seatsPerRow; s++) {
-      const currentAngle = startAng + (s + 0.5) * angleStep;
+  for (let r = 0; r < standObj.rows; r++) {
+    const currentRadius = standObj.innerR + (r + 0.5) * radiusStep;
+    for (let s = 0; s < standObj.seatsPerRow; s++) {
+      const currentAngle = standObj.startAng + (s + 0.5) * angleStep;
       const pt = polarToCartesian(cx, cy, currentRadius, currentAngle);
       seats.push({
-         id: `${prefix}${r+1}-${s+1}`, // e.g. N1-15
+         id: `${standObj.prefix}${r+1}-${s+1}`, // e.g. GN1-15
          x: pt.x,
          y: pt.y,
-         isVip,
-         stand: prefix
+         cat: standObj.cat,
+         standName: standObj.id
       });
     }
   }
@@ -70,23 +70,33 @@ export default function SeatSelection() {
   const [userDetails, setUserDetails] = useState({ name: '', email: '', mobile: '' });
   const [timeLeft, setTimeLeft] = useState(300);
 
-  // Generate Stadium Mathematics 
-  // 1000x1000 SVG Canvas
+  // SVG parameters
   const cx = 500, cy = 500;
   
   const stands = useMemo(() => [
-    { id: 'North', prefix: 'N', isVip: false, innerR: 240, outerR: 450, startAng: -35, endAng: 35, rows: 6, seatsPerRow: 20 },
-    { id: 'South', prefix: 'S', isVip: false, innerR: 240, outerR: 450, startAng: 145, endAng: 215, rows: 6, seatsPerRow: 20 },
-    { id: 'East VIP', prefix: 'E', isVip: true, innerR: 220, outerR: 350, startAng: 50, endAng: 130, rows: 4, seatsPerRow: 12 },
-    { id: 'West VIP', prefix: 'W', isVip: true, innerR: 220, outerR: 350, startAng: 230, endAng: 310, rows: 4, seatsPerRow: 12 },
+    { id: 'North General', cat: 'general', prefix: 'GN', innerR: 350, outerR: 450, startAng: -35, endAng: 35, rows: 4, seatsPerRow: 25 },
+    { id: 'South General', cat: 'general', prefix: 'GS', innerR: 350, outerR: 450, startAng: 145, endAng: 215, rows: 4, seatsPerRow: 25 },
+    
+    { id: 'North Premium', cat: 'premium', prefix: 'PN', innerR: 240, outerR: 330, startAng: -35, endAng: 35, rows: 3, seatsPerRow: 20 },
+    { id: 'South Premium', cat: 'premium', prefix: 'PS', innerR: 240, outerR: 330, startAng: 145, endAng: 215, rows: 3, seatsPerRow: 20 },
+    
+    { id: 'East Pavilion', cat: 'pavilion', prefix: 'PVE', innerR: 320, outerR: 450, startAng: 50, endAng: 130, rows: 4, seatsPerRow: 18 },
+    { id: 'West Pavilion', cat: 'pavilion', prefix: 'PVW', innerR: 320, outerR: 450, startAng: 230, endAng: 310, rows: 4, seatsPerRow: 18 },
+
+    { id: 'East VIP', cat: 'vip', prefix: 'VE', innerR: 220, outerR: 300, startAng: 55, endAng: 125, rows: 3, seatsPerRow: 15 },
+    { id: 'West VIP', cat: 'vip', prefix: 'VW', innerR: 220, outerR: 300, startAng: 235, endAng: 305, rows: 3, seatsPerRow: 15 },
+
+    { id: 'Corporate Box', cat: 'corporate', prefix: 'CBT', innerR: 220, outerR: 300, startAng: 38, endAng: 47, rows: 3, seatsPerRow: 3 },
+    { id: 'Corporate Box', cat: 'corporate', prefix: 'CBT2', innerR: 220, outerR: 300, startAng: 313, endAng: 322, rows: 3, seatsPerRow: 3 },
+
+    { id: 'Hospitality Box', cat: 'hospitality', prefix: 'HB', innerR: 220, outerR: 300, startAng: 133, endAng: 142, rows: 3, seatsPerRow: 3 },
+    { id: 'Hospitality Box', cat: 'hospitality', prefix: 'HB2', innerR: 220, outerR: 300, startAng: 218, endAng: 227, rows: 3, seatsPerRow: 3 }
   ], []);
 
   const allSeats = useMemo(() => {
     let seats = [];
     stands.forEach(stand => {
-      seats = seats.concat(generateSeatsForStand(
-        stand.prefix, cx, cy, stand.innerR, stand.outerR, stand.startAng, stand.endAng, stand.rows, stand.seatsPerRow, stand.isVip
-      ));
+      seats = seats.concat(generateSeatsForStand(stand, cx, cy));
     });
     return seats;
   }, [stands]);
@@ -96,7 +106,7 @@ export default function SeatSelection() {
       setMatch(data);
       if (data && allSeats.length > 0) {
         const randomBooked = [];
-        // Randomly book ~25% of the massive stadium
+        // Block ~25% randomly to simulate a crowded arena
         const toBook = Math.floor(allSeats.length * 0.25);
         for (let i = 0; i < toBook; i++) {
           const randomIndex = Math.floor(Math.random() * allSeats.length);
@@ -130,14 +140,15 @@ export default function SeatSelection() {
       if (selectedSeats.length < 10) {
         setSelectedSeats([...selectedSeats, seatId]);
       } else {
-        alert("You can only select up to 10 seats at a time.");
+        alert("You can only select up to 10 tickets at a time.");
       }
     }
   };
 
   const basePrice = selectedSeats.reduce((total, seatId) => {
     const seatObj = allSeats.find(s => s.id === seatId);
-    return total + (seatObj?.isVip ? match?.ticketPrice * 2 : match?.ticketPrice);
+    if (!seatObj) return total;
+    return total + standCategories[seatObj.cat].price;
   }, 0);
   
   const handlingFee = selectedSeats.length > 0 ? 200 : 0;
@@ -169,6 +180,12 @@ export default function SeatSelection() {
     navigate('/');
   };
 
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   if (!match) return <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>Loading stadium architecture...</div>;
 
   return (
@@ -181,127 +198,146 @@ export default function SeatSelection() {
         
         {/* Step 0: Real Graphical SVG Stadium */}
         <div style={{ gridColumn: 'span 3' }}>
-          <div className="glass-panel" style={{ padding: '1rem', borderRadius: '24px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-            
-            <div className="flex justify-between items-center mb-2 px-6 pt-4" style={{maxWidth: '900px', margin: '0 auto'}}>
+          
+          {/* Legend and Rate List Map Pill Categories UI */}
+          <div className="glass-panel mb-8" style={{ padding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h3 className="heading-sm mb-5" style={{ fontSize: '1.25rem' }}>Select Category</h3>
+            <div className="flex flex-wrap gap-4">
+              {Object.entries(standCategories).map(([key, data]) => (
+                <div key={key} className="category-pill" style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${data.color}50`,
+                  borderRadius: '24px',
+                  padding: '0.8rem 1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  boxShadow: `0 4px 15px ${data.color}10`,
+                  minWidth: '220px',
+                  flex: '1 1 auto'
+                }}>
+                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: data.color, boxShadow: `0 0 10px ${data.color}` }} />
+                  <span style={{ fontWeight: 600, color: 'white', flex: 1, letterSpacing: '0.5px' }}>{data.name}</span>
+                  <span style={{ fontWeight: 800, color: data.color, fontSize: '1.1rem' }}>₹{data.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+            <div className="flex justify-between items-center mb-4 px-2 pt-2" style={{maxWidth: '900px', margin: '0 auto'}}>
               <h2 className="heading-md" style={{margin: 0}}>Graphical Seating View</h2>
               <div style={{ background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Click a seat dot to select 
+                Scroll map on mobile to view
               </div>
             </div>
             
-            <div style={{ position: 'relative', width: '100%', maxWidth: '900px', margin: '0 auto', background: 'radial-gradient(circle at center, rgba(34, 197, 94, 0.05) 0%, transparent 60%)', border: '1px solid rgba(255,255,255,0.02)', borderRadius: '40px', overflow: 'hidden' }}>
+            <div 
+              className="stadium-map-container"
+              style={{ 
+                position: 'relative', 
+                width: '100%', 
+                maxWidth: '900px', 
+                margin: '0 auto', 
+                background: 'radial-gradient(circle at center, rgba(34, 197, 94, 0.05) 0%, transparent 60%)', 
+                border: '1px solid rgba(255,255,255,0.02)', 
+                borderRadius: '24px', 
+                overflowX: 'auto', 
+                overflowY: 'hidden',
+                WebkitOverflowScrolling: 'touch',
+                padding: '1rem' 
+              }}>
               
-              {/* Massive SVG Vector Map */}
-              <svg viewBox="0 0 1000 1000" style={{ width: '100%', height: 'auto', display: 'block' }}>
-                <defs>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                  <linearGradient id="pitchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#15803d" />
-                    <stop offset="100%" stopColor="#16a34a" />
-                  </linearGradient>
-                </defs>
+              <div style={{ minWidth: '850px', margin: '0 auto' }}>
+                <svg viewBox="0 0 1000 1000" style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'pan-x pan-y' }}>
+                  <defs>
+                    <filter id="glow">
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                    <linearGradient id="pitchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#15803d" />
+                      <stop offset="100%" stopColor="#16a34a" />
+                    </linearGradient>
+                  </defs>
 
-                {/* Outer Stadium Track / Perimeter */}
-                <circle cx={cx} cy={cy} r="480" fill="transparent" stroke="rgba(255,255,255,0.03)" strokeWidth="2" strokeDasharray="10 10" />
-                <circle cx={cx} cy={cy} r="490" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                  <circle cx={cx} cy={cy} r="480" fill="transparent" stroke="rgba(255,255,255,0.03)" strokeWidth="2" strokeDasharray="10 10" />
+                  <circle cx={cx} cy={cy} r="490" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
 
-                {/* Central Pitch Block */}
-                <circle cx={cx} cy={cy} r="180" fill="url(#pitchGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="5" />
-                {/* 30-yard Inner Circle equivalent */}
-                <circle cx={cx} cy={cy} r="90" fill="transparent" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeDasharray="5 5" />
-                {/* Inner 22-yard main pitch rectangle */}
-                <rect x={cx - 30} y={cy - 80} width="60" height="160" fill="#d6d3d1" rx="4" />
-                <line x1={cx - 30} y1={cy - 60} x2={cx + 30} y2={cy - 60} stroke="#fff" strokeWidth="2" />
-                <line x1={cx - 30} y1={cy + 60} x2={cx + 30} y2={cy + 60} stroke="#fff" strokeWidth="2" />
+                  <circle cx={cx} cy={cy} r="180" fill="url(#pitchGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="5" />
+                  <circle cx={cx} cy={cy} r="90" fill="transparent" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeDasharray="5 5" />
+                  <rect x={cx - 30} y={cy - 80} width="60" height="160" fill="#d6d3d1" rx="4" />
+                  <line x1={cx - 30} y1={cy - 60} x2={cx + 30} y2={cy - 60} stroke="#fff" strokeWidth="2" />
+                  <line x1={cx - 30} y1={cy + 60} x2={cx + 30} y2={cy + 60} stroke="#fff" strokeWidth="2" />
 
-                {/* Draw the architectural curved stand backgrounds */}
-                {stands.map(stand => (
-                  <g key={stand.id} className="stand-group">
-                    <path 
-                      d={describeStand(cx, cy, stand.innerR, stand.outerR, stand.startAng, stand.endAng)} 
-                      fill={stand.isVip ? "rgba(255, 0, 127, 0.05)" : "rgba(255, 255, 255, 0.02)"} 
-                      stroke={stand.isVip ? "rgba(255, 0, 127, 0.2)" : "rgba(255, 255, 255, 0.1)"} 
-                      strokeWidth="2" 
-                      className="stand-bg"
-                    />
-                    {/* Stand Labels on arcs */}
-                    <path id={`path-${stand.id}`} 
-                      d={describeArcText(cx, cy, stand.outerR + 25, stand.startAng, stand.endAng)} 
-                      fill="transparent" 
-                    />
-                    <text fill="var(--text-secondary)" fontSize="18" fontWeight="bold" letterSpacing="4">
-                      <textPath href={`#path-${stand.id}`} startOffset="50%" textAnchor="middle">
-                        {stand.id.toUpperCase()} STAND {stand.isVip ? '★ VIP' : ''}
-                      </textPath>
-                    </text>
-                  </g>
-                ))}
+                  {stands.map(stand => {
+                    const colorHex = standCategories[stand.cat].color;
+                    return (
+                      <g key={stand.id} className="stand-group">
+                        <path 
+                          d={describeStand(cx, cy, stand.innerR, stand.outerR, stand.startAng, stand.endAng)} 
+                          fill={`${colorHex}15`} 
+                          stroke={`${colorHex}50`} 
+                          strokeWidth="2" 
+                          className="stand-bg"
+                        />
+                      </g>
+                    )
+                  })}
 
-                {/* Map every single seat as an interactive circular dot right into the SVG coordinates */}
-                {allSeats.map(seat => {
-                  const isBooked = bookedSeats.includes(seat.id);
-                  const isSelected = selectedSeats.includes(seat.id);
-                  
-                  let fill = "rgba(255,255,255,0.15)";
-                  let stroke = "rgba(255,255,255,0.3)";
-                  let filter = "none";
-                  let r = "6";
-                  
-                  if (isSelected) {
-                    fill = "var(--success)";
-                    stroke = "white";
-                    filter = "url(#glow)";
-                    r = "9";
-                  } else if (isBooked) {
-                    fill = "#334155";
-                    stroke = "transparent";
-                    r = "6";
-                  } else if (seat.isVip) {
-                    fill = "rgba(255, 0, 127, 0.4)";
-                    stroke = "rgba(255, 0, 127, 0.8)";
-                  }
+                  {allSeats.map(seat => {
+                    const isBooked = bookedSeats.includes(seat.id);
+                    const isSelected = selectedSeats.includes(seat.id);
+                    const catColor = standCategories[seat.cat].color;
+                    
+                    let fill = `${catColor}B3`; // 70% opacity
+                    let stroke = catColor;
+                    let filter = "none";
+                    let r = "13"; 
+                    
+                    if (isSelected) {
+                      fill = "var(--success)";
+                      stroke = "white";
+                      filter = "url(#glow)";
+                      r = "18"; 
+                    } else if (isBooked) {
+                      fill = "#334155";
+                      stroke = "rgba(255,255,255,0.1)";
+                      r = "13";
+                    }
 
-                  return (
-                    <circle
-                      key={seat.id}
-                      cx={seat.x}
-                      cy={seat.y}
-                      r={r}
-                      fill={fill}
-                      stroke={stroke}
-                      strokeWidth={isSelected ? "2" : "1"}
-                      filter={filter}
-                      className={`svg-seat ${isBooked ? 'booked' : 'available'} ${isSelected ? 'selected' : ''} ${seat.isVip && !isBooked && !isSelected ? 'vip' : ''}`}
-                      onClick={() => toggleSeat(seat.id)}
-                      style={{ cursor: isBooked ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease' }}
-                    >
-                      <title>{isBooked ? 'Booked' : `${seat.id} - ₹${seat.isVip ? match.ticketPrice * 2 : match.ticketPrice}`}</title>
-                    </circle>
-                  );
-                })}
-              </svg>
-
+                    return (
+                      <circle
+                        key={seat.id}
+                        cx={seat.x}
+                        cy={seat.y}
+                        r={r}
+                        fill={fill}
+                        stroke={stroke}
+                        strokeWidth={isSelected ? "3" : "1"}
+                        filter={filter}
+                        className={`svg-seat ${isBooked ? 'booked' : 'available'} ${isSelected ? 'selected' : ''}`}
+                        onClick={() => toggleSeat(seat.id)}
+                        style={{ cursor: isBooked ? 'not-allowed' : 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                        data-color={catColor}
+                      >
+                        <title>{isBooked ? 'Booked' : `${seat.standName} • Seat ${seat.id}\n₹${standCategories[seat.cat].price}`}</title>
+                      </circle>
+                    );
+                  })}
+                </svg>
+              </div>
             </div>
 
-            <div className="flex items-center gap-8 justify-center mt-6 mb-4" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            <div className="flex flex-wrap items-center gap-6 justify-center mt-6 mb-2" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
               <div className="flex items-center gap-2">
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }} /> Available
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--success)', border: '2px solid white', boxShadow: '0 0 8px var(--success)' }} /> Selected
               </div>
               <div className="flex items-center gap-2">
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--success)', border: '1px solid white', boxShadow: '0 0 8px var(--success)' }} /> Selected
-              </div>
-              <div className="flex items-center gap-2">
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(255, 0, 127, 0.4)', border: '1px solid rgba(255, 0, 127, 0.8)' }} /> VIP
-              </div>
-              <div className="flex items-center gap-2">
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#334155' }} /> Booked
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#334155', border: '1px solid rgba(255,255,255,0.1)' }} /> Booked / Unavailable
               </div>
             </div>
 
@@ -310,7 +346,7 @@ export default function SeatSelection() {
 
         <div>
            {/* Booking Summary Sidebar Component */}
-          <div className="glass-panel" style={{ padding: '2.5rem', borderRadius: '24px', position: 'sticky', top: '100px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="glass-panel" style={{ padding: '2.5rem', borderRadius: '24px', position: 'sticky', top: 'paddingTop', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Ticket size={24} color="var(--primary)" />
               Booking Summary
@@ -327,11 +363,12 @@ export default function SeatSelection() {
                 <div style={{ fontWeight: 600, display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {selectedSeats.map(seatId => {
                     const seatObj = allSeats.find(s => s.id === seatId);
+                    const catColor = seatObj ? standCategories[seatObj.cat].color : 'white';
                     return (
                       <span key={seatId} style={{ 
-                        background: seatObj?.isVip ? 'rgba(255, 0, 127, 0.15)' : 'var(--surface-hover)', 
-                        color: seatObj?.isVip ? 'var(--secondary)' : 'white',
-                        padding: '0.4rem 0.75rem', borderRadius: '8px', fontSize: '0.9rem', border: '1px solid rgba(255,255,255,0.1)' 
+                        background: `${catColor}20`, // 15% opacity tint 
+                        color: catColor,
+                        padding: '0.4rem 0.75rem', borderRadius: '8px', fontSize: '0.9rem', border: `1px solid ${catColor}50`
                       }}>
                         {seatId}
                       </span>
@@ -358,7 +395,7 @@ export default function SeatSelection() {
                   <span style={{fontWeight: 500}}>₹{gst.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between" style={{ fontWeight: 700, fontSize: '1.25rem' }}>
-                  <span>Total Amount</span>
+                  <span>Total</span>
                   <span style={{ color: 'var(--primary)' }}>₹{grandTotal.toFixed(2)}</span>
                 </div>
               </div>
@@ -476,6 +513,32 @@ export default function SeatSelection() {
                   </div>
                 </div>
               </button>
+
+              <button 
+                onClick={() => setPaymentMethod('Card')}
+                className="payment-option btn-secondary" 
+                style={{ 
+                  borderRadius: '16px', textAlign: 'left', display: 'block', width: '100%',
+                  background: paymentMethod === 'Card' ? 'rgba(138, 43, 226, 0.1)' : 'var(--surface-hover)',
+                  border: paymentMethod === 'Card' ? '2px solid var(--primary)' : '2px solid transparent',
+                  padding: 0,
+                  boxShadow: paymentMethod === 'Card' ? '0 10px 40px -10px rgba(138, 43, 226, 0.5)' : 'none',
+                  transform: paymentMethod === 'Card' ? 'scale(1.02)' : 'none'
+                }}
+              >
+                <div className="flex items-center gap-5" style={{ padding: '1.5rem' }}>
+                  <div style={{ background: paymentMethod === 'Card' ? 'var(--primary)' : 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CreditCard size={28} color={paymentMethod === 'Card' ? 'white' : 'var(--text-secondary)'} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.3rem', color: paymentMethod === 'Card' ? 'white' : 'var(--text-primary)' }}>Credit / Debit Card</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '0.25rem' }}>Visa, Mastercard, RuPay</div>
+                  </div>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid', borderColor: paymentMethod === 'Card' ? 'var(--primary)' : 'rgba(255,255,255,0.2)', background: paymentMethod === 'Card' ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {paymentMethod === 'Card' && <div style={{width: '12px', height: '12px', borderRadius: '50%', background: 'white'}}></div>}
+                  </div>
+                </div>
+              </button>
             </div>
 
             <div className="flex gap-4 mt-8 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
@@ -579,16 +642,18 @@ export default function SeatSelection() {
 
       <style>{`
         /* Scalable SVG Seats */
-        .svg-seat.available:hover {
-          fill: var(--primary);
-          stroke: var(--primary);
-          r: 10;
-          filter: url(#glow);
+        .stadium-map-container::-webkit-scrollbar {
+          height: 8px;
         }
-        .svg-seat.vip:hover {
-          fill: var(--secondary);
-          stroke: var(--secondary);
-          r: 10;
+        .stadium-map-container::-webkit-scrollbar-thumb {
+          background-color: var(--primary);
+          border-radius: 4px;
+        }
+        
+        .svg-seat.available:hover {
+          stroke: white !important;
+          stroke-width: 3 !important;
+          r: 18;
           filter: url(#glow);
         }
         
@@ -596,8 +661,14 @@ export default function SeatSelection() {
           transition: opacity 0.3s ease;
         }
         .stand-group:hover .stand-bg {
-          fill: rgba(255,255,255,0.06);
-          stroke: rgba(255,255,255,0.3);
+          fill: rgba(255,255,255,0.1) !important;
+          stroke: rgba(255,255,255,0.5) !important;
+        }
+
+        .category-pill:hover {
+           background: rgba(255,255,255,0.08) !important;
+           transform: translateY(-2px);
+           cursor: pointer;
         }
 
         .payment-option {
