@@ -1,5 +1,5 @@
 const EXTERNAL_API_URL = 'https://api.cricapi.com/v1/matches';
-const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with a real API key
+const API_KEY = '1c782863-9b6a-4580-a811-6daa117c7ee4'; // Replace with a real API key
 
 // Local pricing logic based on venue/team
 export const getPriceForVenue = (venue) => {
@@ -67,16 +67,16 @@ export const fetchIplMatches = async () => {
     const url = new URL(EXTERNAL_API_URL);
     url.searchParams.append('apikey', API_KEY);
     url.searchParams.append('offset', 0);
-    
+
     // Note: The external API fetch is active. If the key is invalid or request fails, 
     // it will throw and fall back to local data gracefully.
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
-    
+
     if (!response.ok) throw new Error('External API request failed or unauthorized');
-    
+
     const apiData = await response.json();
     if (apiData.status !== "success") throw new Error('API returned an error wrapper');
 
@@ -91,7 +91,7 @@ export const fetchIplMatches = async () => {
       venue: match.venue || 'TBA',
       description: match.name,
       image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      
+
       // Here we merge the exact requirement: Pricing remains local/proprietary
       ticketPrice: getPriceForVenue(match.venue)
     }));
@@ -100,7 +100,7 @@ export const fetchIplMatches = async () => {
 
   } catch (error) {
     console.warn("External API fetch failed (likely missing API key). Falling back to mock matching prices...", error);
-    
+
     // Merge price with the fallback matches too
     const fallbackBase = await getFallbackMatches();
     return fallbackBase.map(match => ({
