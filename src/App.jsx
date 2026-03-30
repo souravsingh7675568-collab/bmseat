@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import EventDetail from './pages/EventDetail';
 import SeatSelection from './pages/SeatSelection';
+import Admin from './pages/Admin';
 import './index.css';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/event/:id" element={<EventDetail />} />
             <Route path="/event/:id/seats" element={<SeatSelection />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
         

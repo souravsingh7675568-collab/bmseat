@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Ticket, Send, Star, PlayCircle, Activity, ChevronRight } from 'lucide-react';
 
 const FacebookIcon = ({ size = 18, ...props }) => (
@@ -108,7 +109,7 @@ export default function Footer() {
               <div className="flex items-center gap-2 mb-4">
                 <Ticket className="text-primary" size={24} fill="white" />
                 <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                  Book<strong>My</strong>Show
+                  Viagogo
                 </span>
               </div>
               <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
@@ -181,7 +182,7 @@ export default function Footer() {
           {/* Copyright Bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem', textAlign: 'center' }}>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-              © 2026 BookMyShow. All rights reserved.
+              © 2026 Viagogo. All rights reserved. | <Link to="/admin" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.5 }} className="hover:opacity-100">Admin</Link>
             </p>
             <p style={{ color: '#64748b', fontSize: '0.8rem' }}>
               IPL and Indian Premier League are registered trademarks of BCCI.

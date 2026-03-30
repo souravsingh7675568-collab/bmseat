@@ -11,10 +11,10 @@ export default function Header() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontWeight: 'bold', fontSize: '1.25rem'
           }}>
-            B
+            V
           </div>
           <span className="heading-sm" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900 }}>
-            BookMy<span className="text-gradient">Seat</span>
+            Viagogo
           </span>
         </Link>
         <nav className="flex gap-4 items-center" style={{ fontSize: '0.9rem', fontWeight: 500 }}>

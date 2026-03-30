@@ -1,16 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchMatchDetails } from '../data/mockApi';
+import { getSettings } from '../data/settings';
 import { ArrowLeft, Monitor, CreditCard, Wallet, Smartphone, User, Mail, Phone, CheckCircle2, Ticket } from 'lucide-react';
 
-const standCategories = {
-  general: { name: 'General Stand', price: 599, color: '#ec4899' },
-  premium: { name: 'Premium Stand', price: 999, color: '#0ea5e9' },
-  pavilion: { name: 'Pavilion Stand', price: 1499, color: '#22c55e' },
-  vip: { name: 'VIP Stand', price: 1999, color: '#8b5cf6' },
-  corporate: { name: 'Corporate Box', price: 2199, color: '#eab308' },
-  hospitality: { name: 'Hospitality Box', price: 2599, color: '#f97316' },
-};
+// Removed static categories - now loaded from settings in component
 
 // Math Helpers for SVG Arc Generation
 function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
@@ -68,29 +62,50 @@ export default function SeatSelection() {
   const [checkoutStep, setCheckoutStep] = useState('none'); 
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [userDetails, setUserDetails] = useState({ name: '', email: '', mobile: '' });
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [settings, setSettings] = useState(getSettings());
+  const standCategories = settings.categories;
+  const paymentConfig = settings.payment;
 
   // SVG parameters
   const cx = 500, cy = 500;
   
   const stands = useMemo(() => [
-    { id: 'North General', cat: 'general', prefix: 'GN', innerR: 350, outerR: 450, startAng: -35, endAng: 35, rows: 4, seatsPerRow: 25 },
-    { id: 'South General', cat: 'general', prefix: 'GS', innerR: 350, outerR: 450, startAng: 145, endAng: 215, rows: 4, seatsPerRow: 25 },
+    // Layer 1: Outer Rim (General & Silver) - Very high density
+    { id: 'North General', cat: 'general', prefix: 'GN', innerR: 440, outerR: 490, startAng: -40, endAng: 40, rows: 6, seatsPerRow: 60 },
+    { id: 'South General', cat: 'general', prefix: 'GS', innerR: 440, outerR: 490, startAng: 140, endAng: 220, rows: 6, seatsPerRow: 60 },
+    { id: 'East Silver', cat: 'silver', prefix: 'SLE', innerR: 440, outerR: 490, startAng: 41, endAng: 139, rows: 6, seatsPerRow: 70 },
+    { id: 'West Silver', cat: 'silver', prefix: 'SLW', innerR: 440, outerR: 490, startAng: 221, endAng: 319, rows: 6, seatsPerRow: 70 },
     
-    { id: 'North Premium', cat: 'premium', prefix: 'PN', innerR: 240, outerR: 330, startAng: -35, endAng: 35, rows: 3, seatsPerRow: 20 },
-    { id: 'South Premium', cat: 'premium', prefix: 'PS', innerR: 240, outerR: 330, startAng: 145, endAng: 215, rows: 3, seatsPerRow: 20 },
+    // Layer 2: Mid Rim (Premium & Gold)
+    { id: 'North Premium', cat: 'premium', prefix: 'PN', innerR: 370, outerR: 435, startAng: -40, endAng: 40, rows: 8, seatsPerRow: 55 },
+    { id: 'South Premium', cat: 'premium', prefix: 'PS', innerR: 370, outerR: 435, startAng: 140, endAng: 220, rows: 8, seatsPerRow: 55 },
+    { id: 'East Gold', cat: 'gold', prefix: 'GLE', innerR: 370, outerR: 435, startAng: 41, endAng: 139, rows: 8, seatsPerRow: 65 },
+    { id: 'West Gold', cat: 'gold', prefix: 'GLW', innerR: 370, outerR: 435, startAng: 221, endAng: 319, rows: 8, seatsPerRow: 65 },
+
+    // Layer 3: Inner Mid (Pavilion & Platinum)
+    { id: 'East Pavilion', cat: 'pavilion', prefix: 'PVE', innerR: 300, outerR: 365, startAng: 41, endAng: 139, rows: 7, seatsPerRow: 50 },
+    { id: 'West Pavilion', cat: 'pavilion', prefix: 'PVW', innerR: 300, outerR: 365, startAng: 221, endAng: 319, rows: 7, seatsPerRow: 50 },
+    { id: 'North Platinum', cat: 'platinum', prefix: 'PLN', innerR: 300, outerR: 365, startAng: -40, endAng: 40, rows: 7, seatsPerRow: 45 },
+    { id: 'South Platinum', cat: 'platinum', prefix: 'PLS', innerR: 300, outerR: 365, startAng: 140, endAng: 220, rows: 7, seatsPerRow: 45 },
+
+    // Layer 4: Close Up (VIP & Diamond)
+    { id: 'North VIP', cat: 'vip', prefix: 'VN', innerR: 240, outerR: 295, startAng: -40, endAng: 40, rows: 6, seatsPerRow: 35 },
+    { id: 'South VIP', cat: 'vip', prefix: 'VS', innerR: 240, outerR: 295, startAng: 140, endAng: 220, rows: 6, seatsPerRow: 35 },
+    { id: 'East Diamond', cat: 'diamond', prefix: 'DE', innerR: 240, outerR: 295, startAng: 41, endAng: 139, rows: 6, seatsPerRow: 40 },
+    { id: 'West Diamond', cat: 'diamond', prefix: 'DW', innerR: 240, outerR: 295, startAng: 221, endAng: 319, rows: 6, seatsPerRow: 40 },
+
+    // Layer 5: Ultra Luxury (Corporate, Hospitality, Elite, Owners)
+    { id: 'Corporate Top', cat: 'corporate', prefix: 'CBT', innerR: 200, outerR: 235, startAng: -40, endAng: -5, rows: 4, seatsPerRow: 10 },
+    { id: 'Corporate Bottom', cat: 'corporate', prefix: 'CBB', innerR: 200, outerR: 235, startAng: 5, endAng: 40, rows: 4, seatsPerRow: 10 },
     
-    { id: 'East Pavilion', cat: 'pavilion', prefix: 'PVE', innerR: 320, outerR: 450, startAng: 50, endAng: 130, rows: 4, seatsPerRow: 18 },
-    { id: 'West Pavilion', cat: 'pavilion', prefix: 'PVW', innerR: 320, outerR: 450, startAng: 230, endAng: 310, rows: 4, seatsPerRow: 18 },
+    { id: 'Hospitality East', cat: 'hospitality', prefix: 'HE', innerR: 200, outerR: 235, startAng: 41, endAng: 139, rows: 4, seatsPerRow: 30 },
+    { id: 'Hospitality West', cat: 'hospitality', prefix: 'HW', innerR: 200, outerR: 235, startAng: 221, endAng: 319, rows: 4, seatsPerRow: 30 },
 
-    { id: 'East VIP', cat: 'vip', prefix: 'VE', innerR: 220, outerR: 300, startAng: 55, endAng: 125, rows: 3, seatsPerRow: 15 },
-    { id: 'West VIP', cat: 'vip', prefix: 'VW', innerR: 220, outerR: 300, startAng: 235, endAng: 305, rows: 3, seatsPerRow: 15 },
+    { id: 'Elite North', cat: 'elite', prefix: 'ELN', innerR: 200, outerR: 235, startAng: 140, endAng: 175, rows: 4, seatsPerRow: 10 },
+    { id: 'Elite South', cat: 'elite', prefix: 'ELS', innerR: 200, outerR: 235, startAng: 185, endAng: 220, rows: 4, seatsPerRow: 10 },
 
-    { id: 'Corporate Box', cat: 'corporate', prefix: 'CBT', innerR: 220, outerR: 300, startAng: 38, endAng: 47, rows: 3, seatsPerRow: 3 },
-    { id: 'Corporate Box', cat: 'corporate', prefix: 'CBT2', innerR: 220, outerR: 300, startAng: 313, endAng: 322, rows: 3, seatsPerRow: 3 },
-
-    { id: 'Hospitality Box', cat: 'hospitality', prefix: 'HB', innerR: 220, outerR: 300, startAng: 133, endAng: 142, rows: 3, seatsPerRow: 3 },
-    { id: 'Hospitality Box', cat: 'hospitality', prefix: 'HB2', innerR: 220, outerR: 300, startAng: 218, endAng: 227, rows: 3, seatsPerRow: 3 }
+    { id: "Owner's Box N", cat: 'owners', prefix: 'OWN', innerR: 160, outerR: 195, startAng: -20, endAng: 20, rows: 3, seatsPerRow: 8 },
+    { id: "Owner's Box S", cat: 'owners', prefix: 'OWS', innerR: 160, outerR: 195, startAng: 160, endAng: 200, rows: 3, seatsPerRow: 8 }
   ], []);
 
   const allSeats = useMemo(() => {
@@ -209,22 +224,25 @@ export default function SeatSelection() {
           {/* Legend and Rate List Map Pill Categories UI */}
           <div className="glass-panel mb-6 md:mb-8" style={{ padding: '1.5rem', mdPadding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 className="heading-sm mb-5" style={{ fontSize: '1.25rem' }}>Select Category</h3>
-            <div className="flex flex-wrap gap-3 w-full">
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
+              gap: '12px',
+              width: '100%'
+            }}>
               {Object.entries(standCategories).map(([key, data]) => (
                 <div key={key} className="category-pill flex flex-col items-center justify-center p-3" style={{
                   background: 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${data.color}50`,
+                  border: `1px solid ${data.color}40`,
                   borderRadius: '16px',
-                  boxShadow: `0 4px 15px ${data.color}10`,
-                  flex: '1 1 140px',
-                  minWidth: '140px',
-                  overflow: 'hidden'
+                  boxShadow: `0 4px 15px ${data.color}05`,
+                  transition: 'transform 0.2s ease'
                 }}>
-                  <div className="flex items-center justify-center gap-2 mb-1.5 w-full px-1">
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: data.color, boxShadow: `0 0 10px ${data.color}`, flexShrink: 0 }} />
-                    <span style={{ fontWeight: 600, color: 'white', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{data.name}</span>
+                  <div className="flex items-center justify-center gap-2 mb-1 w-full">
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: data.color, boxShadow: `0 0 8px ${data.color}`, flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, color: '#e2e8f0', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{data.name}</span>
                   </div>
-                  <span style={{ fontWeight: 800, color: data.color, fontSize: '1.1rem', lineHeight: '1' }}>₹{data.price}</span>
+                  <span style={{ fontWeight: 800, color: data.color, fontSize: '1rem', lineHeight: '1' }}>₹{data.price}</span>
                 </div>
               ))}
             </div>
@@ -279,20 +297,7 @@ export default function SeatSelection() {
                   <line x1={cx - 30} y1={cy - 60} x2={cx + 30} y2={cy - 60} stroke="#fff" strokeWidth="2" />
                   <line x1={cx - 30} y1={cy + 60} x2={cx + 30} y2={cy + 60} stroke="#fff" strokeWidth="2" />
 
-                  {stands.map(stand => {
-                    const colorHex = standCategories[stand.cat].color;
-                    return (
-                      <g key={stand.id} className="stand-group">
-                        <path 
-                          d={describeStand(cx, cy, stand.innerR, stand.outerR, stand.startAng, stand.endAng)} 
-                          fill={`${colorHex}15`} 
-                          stroke={`${colorHex}50`} 
-                          strokeWidth="2" 
-                          className="stand-bg"
-                        />
-                      </g>
-                    )
-                  })}
+                  {/* Sector Backgrounds Removed for Seamless View */}
 
                   {allSeats.map(seat => {
                     const isBooked = bookedSeats.includes(seat.id);
@@ -302,7 +307,7 @@ export default function SeatSelection() {
                     let fill = `${catColor}B3`; // 70% opacity
                     let stroke = catColor;
                     let filter = "none";
-                    let r = "13"; 
+                    let r = "8"; 
                     
                     if (isSelected) {
                       fill = "var(--success)";
@@ -310,9 +315,9 @@ export default function SeatSelection() {
                       filter = "url(#glow)";
                       r = "18"; 
                     } else if (isBooked) {
-                      fill = "#334155";
-                      stroke = "rgba(255,255,255,0.1)";
-                      r = "13";
+                      fill = "#1e293b";
+                      stroke = "rgba(255,255,255,0.05)";
+                      r = "8";
                     }
 
                     return (
@@ -622,15 +627,23 @@ export default function SeatSelection() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '2.5rem' }}>Open Google Pay, PhonePe or any UPI app to scan.</p>
 
             <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', display: 'inline-block', marginBottom: '2.5rem', boxShadow: '0 15px 40px rgba(0,0,0,0.4)' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=7985492748@okbizaxis&pn=Viagogo&cu=INR&am=${grandTotal}`} 
-                alt="UPI QR Code" 
-                style={{ borderRadius: '8px', display: 'block', width: '220px', height: '220px' }} 
-              />
+              {paymentConfig.qrImage ? (
+                <img 
+                  src={paymentConfig.qrImage} 
+                  alt="Custom Admin QR" 
+                  style={{ borderRadius: '8px', display: 'block', width: '220px', height: '220px', objectFit: 'contain' }} 
+                />
+              ) : (
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=${paymentConfig.upiId}&pn=${paymentConfig.merchantName}&cu=INR&am=${grandTotal}`} 
+                  alt="Auto-generated QR" 
+                  style={{ borderRadius: '8px', display: 'block', width: '220px', height: '220px' }} 
+                />
+              )}
               <div style={{color: 'black', marginTop: '1.25rem', fontWeight: 700, fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
-                <span style={{background: '#f8f9fa', padding: '4px 12px', borderRadius: '20px', border: '1px solid #dee2e6'}}>Viagogo</span>
+                <span style={{background: '#f8f9fa', padding: '4px 12px', borderRadius: '20px', border: '1px solid #dee2e6'}}>{paymentConfig.merchantName}</span>
               </div>
-              <div style={{color: '#666', fontSize: '0.9rem', marginTop: '4px'}}>7985492748@okbizaxis</div>
+              <div style={{color: '#666', fontSize: '0.9rem', marginTop: '4px'}}>{paymentConfig.upiId}</div>
             </div>
 
             <div className="flex justify-center items-center gap-3 mb-8" style={{ color: timeLeft < 60 ? 'var(--danger)' : 'var(--primary)', fontWeight: 'bold', fontSize: '1.8rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '16px', display: 'inline-flex' }}>
