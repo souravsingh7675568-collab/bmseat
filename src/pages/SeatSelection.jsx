@@ -62,6 +62,7 @@ export default function SeatSelection() {
   const [checkoutStep, setCheckoutStep] = useState('none'); 
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [userDetails, setUserDetails] = useState({ name: '', email: '', mobile: '' });
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minute payment timer
   const [settings, setSettings] = useState(getSettings());
   const standCategories = settings.categories;
   const paymentConfig = settings.payment;
@@ -134,17 +135,12 @@ export default function SeatSelection() {
   useEffect(() => {
     let timerId;
     if (checkoutStep === 'upi-qr' && timeLeft > 0) {
-      // Auto-success after 5 seconds to simulate payment detection
-      if (timeLeft === 295) {
-        setCheckoutStep('success');
-      }
       timerId = setInterval(() => {
         setTimeLeft(prv => prv - 1);
       }, 1000);
     } else if (checkoutStep === 'upi-qr' && timeLeft === 0) {
-      alert("Payment session expired! Please try booking again.");
-      setCheckoutStep('none');
-      setTimeLeft(300);
+      // Transition to success after full 5 minutes as requested
+      setCheckoutStep('success');
     }
     return () => clearInterval(timerId);
   }, [checkoutStep, timeLeft]);
@@ -623,7 +619,10 @@ export default function SeatSelection() {
         <div className="overlay">
           <div className="glass-panel modal-card" style={{ maxWidth: '450px', textAlign: 'center', padding: '3.5rem 2.5rem' }}>
             <h2 className="heading-md mb-2" style={{ fontSize: '2rem' }}>Scan & Pay</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '2.5rem' }}>Open Google Pay, PhonePe or any UPI app to scan.</p>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '1rem' }}>
+              ₹{grandTotal.toFixed(2)}
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '2rem' }}>Open Google Pay, PhonePe or any UPI app to scan.</p>
 
             <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', display: 'inline-block', marginBottom: '2.5rem', boxShadow: '0 15px 40px rgba(0,0,0,0.4)' }}>
               {paymentConfig.qrImage ? (
