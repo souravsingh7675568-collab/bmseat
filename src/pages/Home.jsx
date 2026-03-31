@@ -1,18 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchIplMatches } from '../data/mockApi';
+import { getIplMatches } from '../data/matchData';
 import { Calendar, MapPin, Ticket } from 'lucide-react';
 
 export default function Home() {
-  const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchIplMatches().then(data => {
-      setMatches(data);
-      setLoading(false);
-    });
-  }, []);
+  const matches = getIplMatches();
 
   return (
     <div>
@@ -51,78 +43,85 @@ export default function Home() {
           Upcoming <span className="text-gradient">IPL Matches</span>
         </h2>
         
-        {loading ? (
-          <div className="flex justify-center items-center" style={{ minHeight: '200px' }}>
-            <div style={{
-              width: '50px', height: '50px', 
-              border: '4px solid var(--border)',
-              borderTopColor: 'var(--primary)',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-          </div>
-        ) : (
-          <div className="grid-responsive mb-12">
-            {matches.map(match => (
-              <Link key={match.id} to={`/event/${match.id}`} className="glass-panel group overflow-hidden block" 
-                   style={{ transition: 'all 0.3s ease', textDecoration: 'none', color: 'inherit' }}>
-                <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
-                  <img 
-                    src={match.image} 
-                    alt={match.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
-                    className="group-hover:scale-110"
-                    onError={(e) => {
-                      e.target.src = "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=800";
-                    }}
-                  />
-                  <div 
-                    style={{ 
-                      position: 'absolute', 
-                      top: '1rem', 
-                      right: '1rem', 
-                      background: 'rgba(138, 43, 226, 0.9)', 
-                      padding: '0.4rem 0.8rem', 
-                      borderRadius: '8px', 
-                      fontSize: '0.8rem', 
-                      fontWeight: 700 
-                    }}
-                  >
-                    LIVE
-                  </div>
-                </div>
-                
-                <div style={{ padding: '1.5rem' }}>
-                  <div className="flex justify-between items-center mb-3">
-                    <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.85rem' }}>{match.venue}</span>
-                    <div className="flex items-center gap-1.5" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                      <Calendar size={14} />
-                      <span>{new Date(match.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+        <div className="grid-responsive mb-12">
+            {matches.length > 0 ? (
+              matches.map(match => (
+                <Link key={match.id} to={`/event/${match.id}`} className="glass-panel group overflow-hidden block" 
+                     style={{ transition: 'all 0.3s ease', textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
+                    <img 
+                      src={match.image} 
+                      alt={match.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+                      className="group-hover:scale-110"
+                      onError={(e) => {
+                        e.target.src = "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=800";
+                      }}
+                    />
+                    <div 
+                      style={{ 
+                        position: 'absolute', 
+                        top: '1rem', 
+                        right: '1rem', 
+                        background: 'rgba(138, 43, 226, 0.9)', 
+                        padding: '0.4rem 0.8rem', 
+                        borderRadius: '8px', 
+                        fontSize: '0.8rem', 
+                        fontWeight: 700 
+                      }}
+                    >
+                      LIVE
                     </div>
                   </div>
                   
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', lineHeight: 1.3, height: '3.3rem', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                    {match.name}
-                  </h3>
-                  
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    paddingTop: '1.2rem', 
-                    borderTop: '1px solid rgba(255,255,255,0.05)' 
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                      <Ticket size={18} color="var(--primary)" />
-                      <span style={{ fontSize: '0.9rem' }}>From ₹600</span>
+                  <div style={{ padding: '1.5rem' }}>
+                    <div className="flex justify-between items-center mb-3">
+                      <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.85rem' }}>{match.venue}</span>
+                      <div className="flex items-center gap-1.5" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                        <Calendar size={14} />
+                        <span>{new Date(match.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+                      </div>
                     </div>
-                    <span className="btn-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.9rem' }}>Book Now</span>
+                    
+                    <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', lineHeight: 1.3, height: '3.3rem', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {match.name || match.description}
+                    </h3>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      paddingTop: '1.2rem', 
+                      borderTop: '1px solid rgba(255,255,255,0.05)' 
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                        <Ticket size={18} color="var(--primary)" />
+                        <span style={{ fontSize: '0.9rem' }}>From ₹{match.ticketPrice || 600}</span>
+                      </div>
+                      <span className="btn-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.9rem' }}>Book Now</span>
+                    </div>
                   </div>
+                </Link>
+              ))
+            ) : (
+              <div className="glass-panel" style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', borderRadius: '32px' }}>
+                <div style={{ background: 'rgba(138, 43, 226, 0.1)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', margin: '0 auto 1.5rem' }}>
+                  <Ticket size={40} color="var(--primary)" />
                 </div>
-              </Link>
-            ))}
+                <h3 className="heading-sm mb-2" style={{fontSize: '1.5rem'}}>No Live IPL Matches Found</h3>
+                <p style={{ color: 'var(--text-secondary)', maxWidth: '450px', margin: '0 auto' }}>
+                  We are currently fetching the latest schedule from the official feed. Please check back later for live IPL 2026 tickets.
+                </p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="btn-primary" 
+                  style={{ marginTop: '2rem', padding: '0.8rem 2rem' }}
+                >
+                  Refresh Feed
+                </button>
+              </div>
+            )}
           </div>
-        )}
       </section>
 
       <style>{`

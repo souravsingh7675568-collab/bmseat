@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchMatchDetails } from '../data/mockApi';
+import { getMatchById } from '../data/matchData';
 import { Calendar, MapPin, Tag, ArrowLeft } from 'lucide-react';
 
 export default function EventDetail() {
@@ -10,10 +10,9 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMatchDetails(id).then(data => {
-      setMatch(data);
-      setLoading(false);
-    });
+    const data = getMatchById(id);
+    setMatch(data);
+    setLoading(false);
   }, [id]);
 
   if (loading) return (

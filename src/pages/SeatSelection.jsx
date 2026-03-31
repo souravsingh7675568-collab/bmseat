@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchMatchDetails } from '../data/mockApi';
+import { getMatchById } from '../data/matchData';
 import { getSettings } from '../data/settings';
 import { ArrowLeft, Monitor, CreditCard, Wallet, Smartphone, User, Mail, Phone, CheckCircle2, Ticket } from 'lucide-react';
 
@@ -117,19 +117,18 @@ export default function SeatSelection() {
   }, [stands]);
 
   useEffect(() => {
-    fetchMatchDetails(id).then(data => {
-      setMatch(data);
-      if (data && allSeats.length > 0) {
-        const randomBooked = [];
-        // Block ~25% randomly to simulate a crowded arena
-        const toBook = Math.floor(allSeats.length * 0.25);
-        for (let i = 0; i < toBook; i++) {
-          const randomIndex = Math.floor(Math.random() * allSeats.length);
-          randomBooked.push(allSeats[randomIndex].id);
-        }
-        setBookedSeats(randomBooked);
+    const data = getMatchById(id);
+    setMatch(data);
+    if (data && allSeats.length > 0) {
+      const randomBooked = [];
+      // Block ~25% randomly to simulate a crowded arena
+      const toBook = Math.floor(allSeats.length * 0.25);
+      for (let i = 0; i < toBook; i++) {
+        const randomIndex = Math.floor(Math.random() * allSeats.length);
+        randomBooked.push(allSeats[randomIndex].id);
       }
-    });
+      setBookedSeats(randomBooked);
+    }
   }, [id, allSeats]);
 
   useEffect(() => {
